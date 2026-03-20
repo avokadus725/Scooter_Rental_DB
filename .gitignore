@@ -1,0 +1,16 @@
+# Liquibase local config (contains credentials — never commit)
+liquibase.properties
+liquibase-init-db.properties
+
+# Maven build output
+target/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# OS
+.DS_Store
+Thumbs.db

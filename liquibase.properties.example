@@ -1,0 +1,6 @@
+changeLogFile=db.changelog-master.xml
+url=jdbc:sqlserver://localhost:1433;databaseName=scooter_rental;encrypt=false
+username=sa
+password=YOUR_PASSWORD_HERE
+driver=com.microsoft.sqlserver.jdbc.SQLServerDriver
+logLevel=info

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        Service registry table.
+        Stores metadata about every table created in the project.
+        Author: template (team lead)
+        Branch: feature/initial-tables
+    -->
+    <changeSet id="000-create-tables-registry" author="template">
+        <createTable tableName="tables" schemaName="dbo"
+                     remarks="Service registry — stores metadata about every table in the project">
+            <column name="id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="PK_tables"/>
+            </column>
+            <column name="db_" type="NVARCHAR(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="NVARCHAR(128)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="UQ_tables_name"/>
+            </column>
+            <column name="type" type="NVARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="author" type="NVARCHAR(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="INT" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="service" type="NVARCHAR(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="NVARCHAR(512)"/>
+            <column name="column_count" type="INT"/>
+            <column name="created_at" type="DATETIME2" defaultValueComputed="SYSUTCDATETIME()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_update_at" type="DATETIME2"/>
+        </createTable>
+
+        <sql>CREATE INDEX idx_tables_name ON dbo.tables (name);</sql>
+        <sql>CREATE INDEX idx_tables_service ON dbo.tables (service);</sql>
+
+        <!-- Register the tables registry table in itself -->
+        <sql>
+            INSERT INTO dbo.tables (db_, name, type, author, version, service, description, column_count, created_at, last_update_at)
+            VALUES (
+                'scooter_rental',
+                'tables',
+                'SYSTEM',
+                'template',
+                1,
+                'SYSTEM',
+                'Service registry — stores metadata about every table created in the project',
+                (SELECT COUNT(*) FROM sys.columns WHERE object_id = OBJECT_ID('dbo.tables')),
+                SYSUTCDATETIME(),
+                NULL
+            );
+        </sql>
+
+        <rollback>
+            <sql>DELETE FROM dbo.tables WHERE name = 'tables';</sql>
+            <dropTable tableName="tables" schemaName="dbo"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

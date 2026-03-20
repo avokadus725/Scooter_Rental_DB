@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        Changelog for database initialization.
+        Run with profile: mvn liquibase:update -P init-db
+        Connects to master DB as SA and creates the scooter_rental database.
+    -->
+    <changeSet id="000-create-database" author="template">
+        <preConditions onFail="CONTINUE">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM sys.databases WHERE name = 'scooter_rental'
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            CREATE DATABASE scooter_rental
+            COLLATE Cyrillic_General_CI_AS;
+        </sql>
+        <rollback>
+            <sql>DROP DATABASE IF EXISTS scooter_rental;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
