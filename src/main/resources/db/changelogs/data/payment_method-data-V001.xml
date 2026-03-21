@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        Initial seed data for payment_method table.
+        Author: olesia
+        Branch: feature/payment-service
+    -->
+    <changeSet id="001-payment_method-data" author="olesia">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="payment_method"/>
+        </preConditions>
+
+        <sql>
+            INSERT INTO dbo.payment_method (code, name, description, is_active) VALUES
+                ('CASH',           'Готівка',           'Payment with cash at the terminal',        1),
+                ('CARD',           'Банківська карта',   'Payment via debit or credit bank card',    1),
+                ('DIGITAL_WALLET', 'Цифровий гаманець',  'Payment via Apple Pay, Google Pay, etc.', 1);
+        </sql>
+
+        <rollback>
+            <sql>DELETE FROM dbo.payment_method WHERE code IN ('CASH', 'CARD', 'DIGITAL_WALLET');</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
