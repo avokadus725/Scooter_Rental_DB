@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        RENTAL_SERVICE: add composite index for active rental lookup by scooter.
+        Author: olesia
+        Branch: rental_service-feature
+    -->
+    <changeSet id="001-rental-add-composite-index" author="olesia">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="rental"/>
+        </preConditions>
+
+        <sql>
+            CREATE INDEX idx_rental_scooter_status
+            ON dbo.rental (scooter_id, status_id);
+        </sql>
+
+        <sql>
+            UPDATE dbo.tables
+            SET last_update_at = SYSUTCDATETIME(), version = version + 1
+            WHERE name = 'rental';
+        </sql>
+
+        <rollback>
+            <sql>DROP INDEX IF EXISTS idx_rental_scooter_status ON dbo.rental;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
