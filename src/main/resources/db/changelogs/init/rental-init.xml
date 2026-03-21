@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        RENTAL_SERVICE: rental main transaction table.
+        Author: olesia
+        Branch: feature/rental-service
+    -->
+    <changeSet id="008-create-rental-table" author="olesia">
+        <createTable tableName="rental" schemaName="dbo"
+                     remarks="Scooter rental transactions — core business entity">
+            <column name="id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="PK_rental"/>
+            </column>
+            <column name="user_id" type="INT">
+                <constraints nullable="false"
+                             foreignKeyName="FK_rental_user"
+                             references="dbo.[user](id)"/>
+            </column>
+            <column name="scooter_id" type="INT">
+                <constraints nullable="false"
+                             foreignKeyName="FK_rental_scooter"
+                             references="dbo.scooter(id)"/>
+            </column>
+            <column name="status_id" type="INT">
+                <constraints nullable="false"
+                             foreignKeyName="FK_rental_rental_status"
+                             references="dbo.rental_status(id)"/>
+            </column>
+            <column name="start_location_id" type="INT">
+                <constraints nullable="false"
+                             foreignKeyName="FK_rental_start_location"
+                             references="dbo.location(id)"/>
+            </column>
+            <column name="end_location_id" type="INT">
+                <constraints foreignKeyName="FK_rental_end_location"
+                             references="dbo.location(id)"/>
+            </column>
+            <column name="start_time" type="DATETIME2">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_time" type="DATETIME2"/>
+            <column name="distance_km" type="DECIMAL(10,3)"/>
+            <column name="total_cost" type="DECIMAL(12,2)"/>
+            <column name="created_at" type="DATETIME2" defaultValueComputed="SYSUTCDATETIME()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <sql>CREATE INDEX idx_rental_user_id ON dbo.rental (user_id);</sql>
+        <sql>CREATE INDEX idx_rental_scooter_id ON dbo.rental (scooter_id);</sql>
+        <sql>CREATE INDEX idx_rental_status_id ON dbo.rental (status_id);</sql>
+        <sql>CREATE INDEX idx_rental_start_time ON dbo.rental (start_time);</sql>
+        <sql>CREATE INDEX idx_rental_user_start ON dbo.rental (user_id, start_time);</sql>
+
+        <sql>
+            INSERT INTO dbo.tables (db_, name, type, author, version, service, description, column_count, created_at, last_update_at)
+            VALUES (
+                'scooter_rental',
+                'rental',
+                'DATA_TABLE',
+                'olesia',
+                1,
+                'RENTAL_SERVICE',
+                'Scooter rental transactions — core business entity',
+                (SELECT COUNT(*) FROM sys.columns WHERE object_id = OBJECT_ID('dbo.rental')),
+                SYSUTCDATETIME(),
+                NULL
+            );
+        </sql>
+
+        <rollback>
+            <sql>DELETE FROM dbo.tables WHERE name = 'rental';</sql>
+            <dropTable tableName="rental" schemaName="dbo"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

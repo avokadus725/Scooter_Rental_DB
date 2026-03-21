@@ -19,7 +19,12 @@
     <include file="src/main/resources/db/changelogs/init/scooter_model-init.xml"/>
     <include file="src/main/resources/db/changelogs/init/scooter-init.xml"/>
 
+    <!-- RENTAL_SERVICE: rental_status, rental -->
+    <include file="src/main/resources/db/changelogs/init/rental_status-init.xml"/>
+    <include file="src/main/resources/db/changelogs/init/rental-init.xml"/>
+
     <!-- ==================== CHANGES (structure modifications) ==================== -->
     <include file="src/main/resources/db/changelogs/changes/scooter-change-V001.xml"/>
+    <include file="src/main/resources/db/changelogs/changes/rental-change-V001.xml"/>
 
 </databaseChangeLog>

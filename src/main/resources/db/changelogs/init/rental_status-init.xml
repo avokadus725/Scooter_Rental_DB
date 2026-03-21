@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        RENTAL_SERVICE: rental_status dictionary table.
+        Author: olesia
+        Branch: feature/rental-service
+    -->
+    <changeSet id="007-create-rental_status-table" author="olesia">
+        <createTable tableName="rental_status" schemaName="dbo"
+                     remarks="Rental lifecycle status dictionary (PENDING, ACTIVE, COMPLETED, CANCELLED)">
+            <column name="id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="PK_rental_status"/>
+            </column>
+            <column name="code" type="NVARCHAR(32)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="UQ_rental_status_code"/>
+            </column>
+            <column name="description" type="NVARCHAR(256)"/>
+        </createTable>
+
+        <sql>CREATE INDEX idx_rental_status_code ON dbo.rental_status (code);</sql>
+
+        <sql>
+            INSERT INTO dbo.tables (db_, name, type, author, version, service, description, column_count, created_at, last_update_at)
+            VALUES (
+                'scooter_rental',
+                'rental_status',
+                'DICTIONARY',
+                'olesia',
+                1,
+                'RENTAL_SERVICE',
+                'Rental lifecycle status dictionary (PENDING, ACTIVE, COMPLETED, CANCELLED)',
+                (SELECT COUNT(*) FROM sys.columns WHERE object_id = OBJECT_ID('dbo.rental_status')),
+                SYSUTCDATETIME(),
+                NULL
+            );
+        </sql>
+
+        <rollback>
+            <sql>DELETE FROM dbo.tables WHERE name = 'rental_status';</sql>
+            <dropTable tableName="rental_status" schemaName="dbo"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
