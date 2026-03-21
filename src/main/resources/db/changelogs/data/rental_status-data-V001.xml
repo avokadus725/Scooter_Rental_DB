@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        Initial seed data for rental_status table.
+        Author: olesia
+        Branch: feature/rental-service
+    -->
+    <changeSet id="001-rental_status-data" author="olesia">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="rental_status"/>
+        </preConditions>
+
+        <sql>
+            INSERT INTO dbo.rental_status (code, description) VALUES
+                ('PENDING',   'Rental has been requested but not yet started'),
+                ('ACTIVE',    'Rental is currently in progress'),
+                ('COMPLETED', 'Rental has been successfully completed'),
+                ('CANCELLED', 'Rental was cancelled before or during the trip');
+        </sql>
+
+        <rollback>
+            <sql>DELETE FROM dbo.rental_status WHERE code IN ('PENDING', 'ACTIVE', 'COMPLETED', 'CANCELLED');</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
