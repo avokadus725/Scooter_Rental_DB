@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        Initial seed data for scooter_model table.
+        Author: alona
+        Branch: feature/scooter-service
+    -->
+    <changeSet id="001-scooter_model-data" author="alona">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="scooter_model"/>
+        </preConditions>
+
+        <sql>
+            INSERT INTO dbo.scooter_model (brand, model_name, max_speed_kmh, battery_capacity_wh, range_km, weight_kg, description) VALUES
+                ('Ninebot', 'MAX G30', 30, 551, 65, 18.7, 'Premium long-range scooter with self-healing tires'),
+                ('Xiaomi',  'Pro 2',   25, 446, 45, 14.2, 'Popular urban commuter with regenerative braking'),
+                ('Segway',  'E45',     30, 432, 45, 16.4, 'Foldable commuter scooter with bright dual lights');
+        </sql>
+
+        <rollback>
+            <sql>DELETE FROM dbo.scooter_model WHERE brand IN ('Ninebot', 'Xiaomi', 'Segway') AND model_name IN ('MAX G30', 'Pro 2', 'E45');</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
