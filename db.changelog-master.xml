@@ -9,29 +9,4 @@
     <!-- Service registry table (must be first) -->
     <include file="src/main/resources/db/changelogs/init/tables-init.xml"/>
 
-    <!-- USER_SERVICE: roles, users, user_roles -->
-    <include file="src/main/resources/db/changelogs/init/roles-init.xml"/>
-    <include file="src/main/resources/db/changelogs/init/users-init.xml"/>
-    <include file="src/main/resources/db/changelogs/init/user_roles-init.xml"/>
-
-    <!-- SCOOTER_SERVICE: locations, scooter_models, scooters -->
-    <include file="src/main/resources/db/changelogs/init/locations-init.xml"/>
-    <include file="src/main/resources/db/changelogs/init/scooter_models-init.xml"/>
-    <include file="src/main/resources/db/changelogs/init/scooters-init.xml"/>
-
-    <!-- RENTAL_SERVICE: rental_statuses, rentals -->
-    <include file="src/main/resources/db/changelogs/init/rental_statuses-init.xml"/>
-    <include file="src/main/resources/db/changelogs/init/rentals-init.xml"/>
-
-    <!-- PAYMENT_SERVICE: payment_methods, payments -->
-    <include file="src/main/resources/db/changelogs/init/payment_methods-init.xml"/>
-    <include file="src/main/resources/db/changelogs/init/payments-init.xml"/>
-
-    <!-- ==================== DATA SEED CHANGELOGS ==================== -->
-    <include file="src/main/resources/db/changelogs/data/roles-data-V001.xml"/>
-    <include file="src/main/resources/db/changelogs/data/rental_statuses-data-V001.xml"/>
-    <include file="src/main/resources/db/changelogs/data/payment_methods-data-V001.xml"/>
-    <include file="src/main/resources/db/changelogs/data/scooter_models-data-V001.xml"/>
-    <include file="src/main/resources/db/changelogs/data/users-data-V001.xml"/>
-
 </databaseChangeLog>
