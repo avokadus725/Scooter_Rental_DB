@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        SCOOTER_SERVICE: add composite index for available scooter search.
+        Author: alona
+        Branch: scooter_service-feature
+    -->
+    <changeSet id="001-scooter-add-composite-index" author="alona">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="scooter"/>
+        </preConditions>
+
+        <sql>
+            CREATE INDEX idx_scooter_status_location
+            ON dbo.scooter (status, current_location_id);
+        </sql>
+
+        <sql>
+            UPDATE dbo.tables
+            SET last_update_at = SYSUTCDATETIME(), version = version + 1
+            WHERE name = 'scooter';
+        </sql>
+
+        <rollback>
+            <sql>DROP INDEX IF EXISTS idx_scooter_status_location ON dbo.scooter;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
