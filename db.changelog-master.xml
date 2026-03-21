@@ -34,5 +34,6 @@
     <!-- ==================== DATA SEED CHANGELOGS ==================== -->
     <include file="src/main/resources/db/changelogs/data/role-data-V001.xml"/>
     <include file="src/main/resources/db/changelogs/data/user-data-V001.xml"/>
+    <include file="src/main/resources/db/changelogs/data/scooter_model-data-V001.xml"/>
 
 </databaseChangeLog>
