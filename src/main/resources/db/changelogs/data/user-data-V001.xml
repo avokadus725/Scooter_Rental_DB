@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        Initial seed data for user table (admin + demo users).
+        password_hash values are bcrypt hashes of "Password1!" for demonstration.
+        Author: alona
+        Branch: feature/user-service
+    -->
+    <changeSet id="001-user-data" author="alona">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="user"/>
+        </preConditions>
+        <sql>
+            INSERT INTO dbo.[user] (username, email, password_hash, phone, first_name, last_name, is_active) VALUES
+                ('admin',      'admin@scooterental.ua',    '$2a$12$K8Y3rQw0ZNAhXvLpN2mFzO1kRtJuMsPdHgCyWqIxAoBlE5nVjT7mu', '+380501234567', 'Admin',  'System',  1),
+                ('john_doe',   'john.doe@example.com',     '$2a$12$K8Y3rQw0ZNAhXvLpN2mFzO1kRtJuMsPdHgCyWqIxAoBlE5nVjT7mu', '+380507654321', 'John',   'Doe',     1),
+                ('jane_smith', 'jane.smith@example.com',   '$2a$12$K8Y3rQw0ZNAhXvLpN2mFzO1kRtJuMsPdHgCyWqIxAoBlE5nVjT7mu', '+380503456789', 'Jane',   'Smith',   1);
+        </sql>
+        <sql>
+            INSERT INTO dbo.user_role (user_id, role_id)
+            SELECT u.id, r.id FROM dbo.[user] u, dbo.role r
+            WHERE u.username = 'admin' AND r.name = 'ADMIN';
+
+            INSERT INTO dbo.user_role (user_id, role_id)
+            SELECT u.id, r.id FROM dbo.[user] u, dbo.role r
+            WHERE u.username = 'john_doe' AND r.name = 'CUSTOMER';
+
+            INSERT INTO dbo.user_role (user_id, role_id)
+            SELECT u.id, r.id FROM dbo.[user] u, dbo.role r
+            WHERE u.username = 'jane_smith' AND r.name = 'CUSTOMER';
+        </sql>
+        <rollback>
+            <sql>
+                DELETE ur FROM dbo.user_role ur
+                INNER JOIN dbo.[user] u ON ur.user_id = u.id
+                WHERE u.username IN ('admin', 'john_doe', 'jane_smith');
+
+                DELETE FROM dbo.[user] WHERE username IN ('admin', 'john_doe', 'jane_smith');
+            </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
