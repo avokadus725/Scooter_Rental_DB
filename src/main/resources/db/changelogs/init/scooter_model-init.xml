@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        SCOOTER_SERVICE: scooter_model reference table.
+        Author: alona
+        Branch: feature/scooter-service
+    -->
+    <changeSet id="005-create-scooter_model-table" author="alona">
+        <createTable tableName="scooter_model" schemaName="dbo"
+                     remarks="Reference catalogue of scooter models with technical specifications">
+            <column name="id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="PK_scooter_model"/>
+            </column>
+            <column name="brand" type="NVARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="model_name" type="NVARCHAR(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_speed_kmh" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="battery_capacity_wh" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="range_km" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="weight_kg" type="DECIMAL(6,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="NVARCHAR(512)"/>
+        </createTable>
+
+        <sql>CREATE INDEX idx_scooter_model_brand ON dbo.scooter_model (brand);</sql>
+        <sql>CREATE INDEX idx_scooter_model_name ON dbo.scooter_model (model_name);</sql>
+
+        <sql>
+            INSERT INTO dbo.tables (db_, name, type, author, version, service, description, column_count, created_at, last_update_at)
+            VALUES (
+                'scooter_rental',
+                'scooter_model',
+                'DICTIONARY',
+                'alona',
+                1,
+                'SCOOTER_SERVICE',
+                'Reference catalogue of scooter models with technical specifications',
+                (SELECT COUNT(*) FROM sys.columns WHERE object_id = OBJECT_ID('dbo.scooter_model')),
+                SYSUTCDATETIME(),
+                NULL
+            );
+        </sql>
+
+        <rollback>
+            <sql>DELETE FROM dbo.tables WHERE name = 'scooter_model';</sql>
+            <dropTable tableName="scooter_model" schemaName="dbo"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

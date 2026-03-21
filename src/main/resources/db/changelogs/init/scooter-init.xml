@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        SCOOTER_SERVICE: scooter table (fleet inventory).
+        Author: alona
+        Branch: feature/scooter-service
+    -->
+    <changeSet id="006-create-scooter-table" author="alona">
+        <createTable tableName="scooter" schemaName="dbo"
+                     remarks="Physical scooter inventory with real-time status and location">
+            <column name="id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="PK_scooter"/>
+            </column>
+            <column name="model_id" type="INT">
+                <constraints nullable="false"
+                             foreignKeyName="FK_scooter_scooter_model"
+                             references="dbo.scooter_model(id)"/>
+            </column>
+            <column name="serial_number" type="NVARCHAR(64)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="UQ_scooter_serial_number"/>
+            </column>
+            <column name="status" type="NVARCHAR(32)" defaultValue="AVAILABLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="battery_level_pct" type="TINYINT" defaultValueNumeric="100">
+                <constraints nullable="false"/>
+            </column>
+            <column name="current_location_id" type="INT">
+                <constraints foreignKeyName="FK_scooter_location"
+                             references="dbo.location(id)"/>
+            </column>
+            <column name="last_maintenance_date" type="DATE"/>
+        </createTable>
+
+        <sql>CREATE INDEX idx_scooter_status ON dbo.scooter (status);</sql>
+        <sql>CREATE INDEX idx_scooter_model_id ON dbo.scooter (model_id);</sql>
+        <sql>CREATE INDEX idx_scooter_location_id ON dbo.scooter (current_location_id);</sql>
+        <sql>CREATE INDEX idx_scooter_battery ON dbo.scooter (battery_level_pct);</sql>
+
+        <sql>
+            INSERT INTO dbo.tables (db_, name, type, author, version, service, description, column_count, created_at, last_update_at)
+            VALUES (
+                'scooter_rental',
+                'scooter',
+                'DATA_TABLE',
+                'alona',
+                1,
+                'SCOOTER_SERVICE',
+                'Physical scooter inventory with real-time status and location',
+                (SELECT COUNT(*) FROM sys.columns WHERE object_id = OBJECT_ID('dbo.scooter')),
+                SYSUTCDATETIME(),
+                NULL
+            );
+        </sql>
+
+        <rollback>
+            <sql>DELETE FROM dbo.tables WHERE name = 'scooter';</sql>
+            <dropTable tableName="scooter" schemaName="dbo"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

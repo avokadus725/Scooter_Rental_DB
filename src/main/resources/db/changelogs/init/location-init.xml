@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        SCOOTER_SERVICE: location table (parking/docking stations).
+        Author: alona
+        Branch: feature/scooter-service
+    -->
+    <changeSet id="004-create-location-table" author="alona">
+        <createTable tableName="location" schemaName="dbo"
+                     remarks="Scooter parking and docking stations with geolocation data">
+            <column name="id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="PK_location"/>
+            </column>
+            <column name="name" type="NVARCHAR(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address" type="NVARCHAR(256)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="latitude" type="DECIMAL(10,7)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="longitude" type="DECIMAL(10,7)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_spots" type="INT" defaultValueNumeric="10">
+                <constraints nullable="false"/>
+            </column>
+            <column name="available_spots" type="INT" defaultValueNumeric="10">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="BIT" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <sql>CREATE INDEX idx_location_name ON dbo.location (name);</sql>
+        <sql>CREATE INDEX idx_location_is_active ON dbo.location (is_active);</sql>
+        <sql>CREATE INDEX idx_location_coords ON dbo.location (latitude, longitude);</sql>
+
+        <sql>
+            INSERT INTO dbo.tables (db_, name, type, author, version, service, description, column_count, created_at, last_update_at)
+            VALUES (
+                'scooter_rental',
+                'location',
+                'DATA_TABLE',
+                'alona',
+                1,
+                'SCOOTER_SERVICE',
+                'Scooter parking and docking stations with geolocation data',
+                (SELECT COUNT(*) FROM sys.columns WHERE object_id = OBJECT_ID('dbo.location')),
+                SYSUTCDATETIME(),
+                NULL
+            );
+        </sql>
+
+        <rollback>
+            <sql>DELETE FROM dbo.tables WHERE name = 'location';</sql>
+            <dropTable tableName="location" schemaName="dbo"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
