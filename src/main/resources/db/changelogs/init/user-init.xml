@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        USER_SERVICE: user table.
+        Author: alona
+        Branch: feature/user-service
+        Note: [user] brackets required in raw SQL — USER is a reserved word in SQL Server.
+    -->
+    <changeSet id="002-create-user-table" author="alona">
+        <createTable tableName="user" schemaName="dbo"
+                     remarks="Registered users of the scooter rental platform">
+            <column name="id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="PK_user"/>
+            </column>
+            <column name="username" type="NVARCHAR(64)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="UQ_user_username"/>
+            </column>
+            <column name="email" type="NVARCHAR(256)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="UQ_user_email"/>
+            </column>
+            <column name="password_hash" type="NVARCHAR(256)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="phone" type="NVARCHAR(32)"/>
+            <column name="first_name" type="NVARCHAR(64)"/>
+            <column name="last_name" type="NVARCHAR(64)"/>
+            <column name="is_active" type="BIT" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="DATETIME2" defaultValueComputed="SYSUTCDATETIME()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="DATETIME2"/>
+        </createTable>
+
+        <sql>CREATE INDEX idx_user_username ON dbo.[user] (username);</sql>
+        <sql>CREATE INDEX idx_user_email ON dbo.[user] (email);</sql>
+        <sql>CREATE INDEX idx_user_is_active ON dbo.[user] (is_active);</sql>
+
+        <sql>
+            INSERT INTO dbo.tables (db_, name, type, author, version, service, description, column_count, created_at, last_update_at)
+            VALUES (
+                'scooter_rental',
+                'user',
+                'DATA_TABLE',
+                'alona',
+                1,
+                'USER_SERVICE',
+                'Registered users of the scooter rental platform',
+                (SELECT COUNT(*) FROM sys.columns WHERE object_id = OBJECT_ID('dbo.[user]')),
+                SYSUTCDATETIME(),
+                NULL
+            );
+        </sql>
+
+        <rollback>
+            <sql>DELETE FROM dbo.tables WHERE name = 'user';</sql>
+            <dropTable tableName="user" schemaName="dbo"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
