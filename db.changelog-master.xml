@@ -9,4 +9,9 @@
     <!-- Service registry table (must be first) -->
     <include file="src/main/resources/db/changelogs/init/tables-init.xml"/>
 
+    <!-- USER_SERVICE: role, user, user_role -->
+    <include file="src/main/resources/db/changelogs/init/role-init.xml"/>
+    <include file="src/main/resources/db/changelogs/init/user-init.xml"/>
+    <include file="src/main/resources/db/changelogs/init/user_role-init.xml"/>
+
 </databaseChangeLog>
