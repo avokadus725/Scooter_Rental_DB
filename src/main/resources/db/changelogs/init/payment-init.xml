@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        PAYMENT_SERVICE: payment transaction table.
+        Author: olesia
+        Branch: feature/payment-service
+    -->
+    <changeSet id="010-create-payment-table" author="olesia">
+        <createTable tableName="payment" schemaName="dbo"
+                     remarks="Payment transactions linked to rentals">
+            <column name="id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="PK_payment"/>
+            </column>
+            <column name="rental_id" type="INT">
+                <constraints nullable="false"
+                             foreignKeyName="FK_payment_rental"
+                             references="dbo.rental(id)"/>
+            </column>
+            <column name="payment_method_id" type="INT">
+                <constraints nullable="false"
+                             foreignKeyName="FK_payment_payment_method"
+                             references="dbo.payment_method(id)"/>
+            </column>
+            <column name="amount" type="DECIMAL(12,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="NVARCHAR(32)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+            <column name="transaction_id" type="NVARCHAR(128)"/>
+            <column name="created_at" type="DATETIME2" defaultValueComputed="SYSUTCDATETIME()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="paid_at" type="DATETIME2"/>
+        </createTable>
+
+        <sql>CREATE INDEX idx_payment_rental_id ON dbo.payment (rental_id);</sql>
+        <sql>CREATE INDEX idx_payment_status ON dbo.payment (status);</sql>
+        <sql>CREATE INDEX idx_payment_method_id ON dbo.payment (payment_method_id);</sql>
+        <sql>CREATE INDEX idx_payment_created_at ON dbo.payment (created_at);</sql>
+
+        <sql>
+            INSERT INTO dbo.tables (db_, name, type, author, version, service, description, column_count, created_at, last_update_at)
+            VALUES (
+                'scooter_rental',
+                'payment',
+                'DATA_TABLE',
+                'olesia',
+                1,
+                'PAYMENT_SERVICE',
+                'Payment transactions linked to rentals',
+                (SELECT COUNT(*) FROM sys.columns WHERE object_id = OBJECT_ID('dbo.payment')),
+                SYSUTCDATETIME(),
+                NULL
+            );
+        </sql>
+
+        <rollback>
+            <sql>DELETE FROM dbo.tables WHERE name = 'payment';</sql>
+            <dropTable tableName="payment" schemaName="dbo"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

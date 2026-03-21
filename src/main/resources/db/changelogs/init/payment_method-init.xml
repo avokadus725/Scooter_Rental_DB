@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        PAYMENT_SERVICE: payment_method dictionary table.
+        Author: olesia
+        Branch: feature/payment-service
+    -->
+    <changeSet id="009-create-payment_method-table" author="olesia">
+        <createTable tableName="payment_method" schemaName="dbo"
+                     remarks="Available payment methods dictionary (CASH, CARD, DIGITAL_WALLET)">
+            <column name="id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="PK_payment_method"/>
+            </column>
+            <column name="code" type="NVARCHAR(32)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="UQ_payment_method_code"/>
+            </column>
+            <column name="name" type="NVARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="NVARCHAR(256)"/>
+            <column name="is_active" type="BIT" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <sql>CREATE INDEX idx_payment_method_code ON dbo.payment_method (code);</sql>
+        <sql>CREATE INDEX idx_payment_method_is_active ON dbo.payment_method (is_active);</sql>
+
+        <sql>
+            INSERT INTO dbo.tables (db_, name, type, author, version, service, description, column_count, created_at, last_update_at)
+            VALUES (
+                'scooter_rental',
+                'payment_method',
+                'DICTIONARY',
+                'olesia',
+                1,
+                'PAYMENT_SERVICE',
+                'Available payment methods dictionary (CASH, CARD, DIGITAL_WALLET)',
+                (SELECT COUNT(*) FROM sys.columns WHERE object_id = OBJECT_ID('dbo.payment_method')),
+                SYSUTCDATETIME(),
+                NULL
+            );
+        </sql>
+
+        <rollback>
+            <sql>DELETE FROM dbo.tables WHERE name = 'payment_method';</sql>
+            <dropTable tableName="payment_method" schemaName="dbo"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
