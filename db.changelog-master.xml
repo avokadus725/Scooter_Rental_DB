@@ -54,4 +54,7 @@
     <include file="src/main/resources/db/changelogs/data/rental_status-data-V001.xml"/>
     <include file="src/main/resources/db/changelogs/data/payment_method-data-V001.xml"/>
 
+    <!-- ==================== TEST DATA GENERATION (LB4 performance testing) ==================== -->
+    <include file="src/main/resources/db/changelogs/data/generate-test-data-V001.xml"/>
+
 </databaseChangeLog>
