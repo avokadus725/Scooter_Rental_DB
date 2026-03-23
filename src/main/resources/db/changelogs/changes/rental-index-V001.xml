@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="001-rental-index-user-covering" author="avokadus725">
+        <preConditions onFail="HALT">
+            <tableExists tableName="rental" schemaName="dbo"/>
+        </preConditions>
+
+        <createIndex indexName="idx_rental_user_covering"
+                     tableName="rental"
+                     schemaName="dbo">
+            <column name="user_id"/>
+        </createIndex>
+
+        <modifySql>
+            <append value=" INCLUDE (scooter_id, start_time, end_time, total_cost)"/>
+        </modifySql>
+
+        <rollback>
+            <dropIndex indexName="idx_rental_user_covering"
+                       tableName="rental"
+                       schemaName="dbo"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
