@@ -10,20 +10,28 @@
             <tableExists tableName="rental" schemaName="dbo"/>
         </preConditions>
 
-        <createIndex indexName="idx_rental_user_covering"
-                     tableName="rental"
-                     schemaName="dbo">
-            <column name="user_id"/>
-        </createIndex>
-
-        <modifySql>
-            <append value=" INCLUDE (scooter_id, start_time, end_time, total_cost)"/>
-        </modifySql>
+        <sql splitStatements="false">
+            IF NOT EXISTS (
+                SELECT 1 FROM sys.indexes
+                WHERE name = 'idx_rental_user_covering'
+                  AND object_id = OBJECT_ID('dbo.rental')
+            )
+            BEGIN
+                CREATE NONCLUSTERED INDEX idx_rental_user_covering
+                ON dbo.rental (user_id)
+                INCLUDE (scooter_id, start_time, end_time, total_cost, duration_minutes);
+            END
+            ELSE
+            BEGIN
+                DROP INDEX idx_rental_user_covering ON dbo.rental;
+                CREATE NONCLUSTERED INDEX idx_rental_user_covering
+                ON dbo.rental (user_id)
+                INCLUDE (scooter_id, start_time, end_time, total_cost, duration_minutes);
+            END
+        </sql>
 
         <rollback>
-            <dropIndex indexName="idx_rental_user_covering"
-                       tableName="rental"
-                       schemaName="dbo"/>
+            <sql>DROP INDEX IF EXISTS idx_rental_user_covering ON dbo.rental;</sql>
         </rollback>
     </changeSet>
 
