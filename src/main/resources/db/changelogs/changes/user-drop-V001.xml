@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        USER_SERVICE: drop user_role junction table — transition to heterogeneous model.
+        Author: avokadus725
+        Branch: user_service-drop
+        Reason: in heterogeneous (NoSQL) model, user roles are stored as an array
+                directly in the user document, eliminating the need for a junction table.
+    -->
+    <changeSet id="001-drop-user-role-table" author="avokadus725">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="user_role"/>
+        </preConditions>
+
+        <sql>DELETE FROM dbo.tables WHERE name = 'user_role';</sql>
+
+        <dropTable schemaName="dbo" tableName="user_role"/>
+
+        <rollback>
+            <createTable tableName="user_role" schemaName="dbo"
+                         remarks="Many-to-many mapping between user and role">
+                <column name="id" type="INT" autoIncrement="true">
+                    <constraints primaryKey="true" nullable="false" primaryKeyName="PK_user_role"/>
+                </column>
+                <column name="user_id" type="INT">
+                    <constraints nullable="false"
+                                 foreignKeyName="FK_user_role_user"
+                                 references="dbo.[user](id)"/>
+                </column>
+                <column name="role_id" type="INT">
+                    <constraints nullable="false"
+                                 foreignKeyName="FK_user_role_role"
+                                 references="dbo.role(id)"/>
+                </column>
+            </createTable>
+            <sql>CREATE UNIQUE INDEX UQ_user_role_user_role ON dbo.user_role (user_id, role_id);</sql>
+            <sql>CREATE INDEX idx_user_role_user_id ON dbo.user_role (user_id);</sql>
+            <sql>CREATE INDEX idx_user_role_role_id ON dbo.user_role (role_id);</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
