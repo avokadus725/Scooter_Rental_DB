@@ -25,6 +25,7 @@
         </preConditions>
 
         <dropIndex schemaName="dbo" tableName="rental" indexName="idx_rental_status_id"/>
+        <dropIndex schemaName="dbo" tableName="rental" indexName="idx_rental_scooter_status"/>
 
         <dropForeignKeyConstraint baseTableSchemaName="dbo"
                                   baseTableName="rental"
@@ -47,6 +48,7 @@
                 </column>
             </addColumn>
             <sql>CREATE INDEX idx_rental_status_id ON dbo.rental (status_id);</sql>
+            <sql>CREATE INDEX idx_rental_scooter_status ON dbo.rental (scooter_id, status_id);</sql>
         </rollback>
     </changeSet>
 
