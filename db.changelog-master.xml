@@ -34,10 +34,12 @@
     <!-- ==================== DENORMALIZATION ==================== -->
     <include file="src/main/resources/db/changelogs/changes/user-denorm-V001.xml"/>
     <include file="src/main/resources/db/changelogs/changes/scooter-denorm-V001.xml"/>
+    <include file="src/main/resources/db/changelogs/changes/rental-denorm-V001.xml"/>
 
     <!-- ==================== TRIGGERS ==================== -->
     <include file="src/main/resources/db/changelogs/triggers/user-trigger-V001.xml"/>
     <include file="src/main/resources/db/changelogs/triggers/scooter-trigger-V001.xml"/>
+    <include file="src/main/resources/db/changelogs/triggers/rental-trigger-V001.xml"/>
 
     <!-- ==================== DATA SEED CHANGELOGS ==================== -->
     <include file="src/main/resources/db/changelogs/data/role-data-V001.xml"/>
