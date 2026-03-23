@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        USER_SERVICE: denormalization — add full_name to user table.
+        Author: avokadus725
+        Branch: user_service-denorm
+        Reason: cache computed full name to avoid repeated string concatenation in queries.
+    -->
+    <changeSet id="001-user-add-full-name" author="avokadus725">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="user"/>
+        </preConditions>
+
+        <addColumn schemaName="dbo" tableName="user">
+            <column name="full_name" type="NVARCHAR(130)"
+                    remarks="Denormalized full name: first_name + last_name, maintained by trigger"/>
+        </addColumn>
+
+        <sql>
+            UPDATE dbo.[user]
+            SET full_name = ISNULL(first_name, '') + CASE WHEN first_name IS NOT NULL AND last_name IS NOT NULL THEN ' ' ELSE '' END + ISNULL(last_name, '')
+            WHERE first_name IS NOT NULL OR last_name IS NOT NULL;
+        </sql>
+
+        <sql>
+            UPDATE dbo.tables
+            SET last_update_at = SYSUTCDATETIME(), version = version + 1
+            WHERE name = 'user';
+        </sql>
+
+        <rollback>
+            <dropColumn schemaName="dbo" tableName="user" columnName="full_name"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

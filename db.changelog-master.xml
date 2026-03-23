@@ -31,6 +31,12 @@
     <include file="src/main/resources/db/changelogs/changes/scooter-change-V001.xml"/>
     <include file="src/main/resources/db/changelogs/changes/rental-change-V001.xml"/>
 
+    <!-- ==================== DENORMALIZATION ==================== -->
+    <include file="src/main/resources/db/changelogs/changes/user-denorm-V001.xml"/>
+
+    <!-- ==================== TRIGGERS ==================== -->
+    <include file="src/main/resources/db/changelogs/triggers/user-trigger-V001.xml"/>
+
     <!-- ==================== DATA SEED CHANGELOGS ==================== -->
     <include file="src/main/resources/db/changelogs/data/role-data-V001.xml"/>
     <include file="src/main/resources/db/changelogs/data/user-data-V001.xml"/>

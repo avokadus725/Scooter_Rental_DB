@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        USER_SERVICE: trigger to maintain full_name denormalized field.
+        Author: avokadus725
+        Branch: user_service-denorm
+        Fires: AFTER INSERT, UPDATE on dbo.[user]
+        Updates full_name = first_name + ' ' + last_name automatically.
+    -->
+    <changeSet id="001-user-trigger-fullname" author="avokadus725">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="user"/>
+            <columnExists schemaName="dbo" tableName="user" columnName="full_name"/>
+        </preConditions>
+
+        <sql splitStatements="false">
+            CREATE OR ALTER TRIGGER dbo.trg_user_fullname
+            ON dbo.[user]
+            AFTER INSERT, UPDATE
+            AS
+            BEGIN
+                SET NOCOUNT ON;
+                IF UPDATE(first_name) OR UPDATE(last_name)
+                BEGIN
+                    UPDATE dbo.[user]
+                    SET full_name = ISNULL(i.first_name, '') +
+                                    CASE WHEN i.first_name IS NOT NULL AND i.last_name IS NOT NULL THEN ' ' ELSE '' END +
+                                    ISNULL(i.last_name, '')
+                    FROM dbo.[user] u
+                    INNER JOIN inserted i ON u.id = i.id;
+                END
+            END;
+        </sql>
+
+        <rollback>
+            <sql>DROP TRIGGER IF EXISTS dbo.trg_user_fullname;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
