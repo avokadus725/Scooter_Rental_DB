@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        PAYMENT_SERVICE: trigger to maintain last_payment_at denormalized field in user table.
+        Author: OlesiaShevchenko245
+        Branch: payment_service-denorm
+        Fires: AFTER INSERT, UPDATE on dbo.payment
+        Updates user.last_payment_at when a payment is created or marked as COMPLETED.
+    -->
+    <changeSet id="001-payment-trigger-last-payment" author="OlesiaShevchenko245">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="payment"/>
+            <tableExists schemaName="dbo" tableName="rental"/>
+            <tableExists schemaName="dbo" tableName="user"/>
+            <columnExists schemaName="dbo" tableName="user" columnName="last_payment_at"/>
+        </preConditions>
+
+        <sql splitStatements="false">
+            CREATE OR ALTER TRIGGER dbo.trg_payment_last_payment
+            ON dbo.payment
+            AFTER INSERT, UPDATE
+            AS
+            BEGIN
+                SET NOCOUNT ON;
+                IF UPDATE(status) OR UPDATE(created_at)
+                BEGIN
+                    UPDATE dbo.[user]
+                    SET last_payment_at = i.created_at
+                    FROM dbo.[user] u
+                    INNER JOIN dbo.rental r ON r.user_id = u.id
+                    INNER JOIN inserted i ON i.rental_id = r.id
+                    WHERE i.status = 'COMPLETED'
+                      AND (u.last_payment_at IS NULL OR i.created_at > u.last_payment_at);
+                END
+            END;
+        </sql>
+
+        <rollback>
+            <sql>DROP TRIGGER IF EXISTS dbo.trg_payment_last_payment;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

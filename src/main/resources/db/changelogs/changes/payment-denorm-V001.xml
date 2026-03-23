@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        PAYMENT_SERVICE: denormalization — add last_payment_at to user table.
+        Author: OlesiaShevchenko245
+        Branch: payment_service-denorm
+        Reason: cache date of last payment directly in user row to avoid MAX(created_at)
+                subquery on payment table for every user profile request.
+    -->
+    <changeSet id="001-user-add-last-payment-at" author="OlesiaShevchenko245">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="user"/>
+            <tableExists schemaName="dbo" tableName="payment"/>
+            <tableExists schemaName="dbo" tableName="rental"/>
+        </preConditions>
+
+        <addColumn schemaName="dbo" tableName="user">
+            <column name="last_payment_at" type="DATETIME2"
+                    remarks="Denormalized date of user last payment, maintained by trigger on payment table"/>
+        </addColumn>
+
+        <sql>
+            UPDATE dbo.[user]
+            SET last_payment_at = p.last_paid
+            FROM dbo.[user] u
+            INNER JOIN (
+                SELECT r.user_id, MAX(p.created_at) AS last_paid
+                FROM dbo.payment p
+                INNER JOIN dbo.rental r ON p.rental_id = r.id
+                WHERE p.status = 'COMPLETED'
+                GROUP BY r.user_id
+            ) p ON u.id = p.user_id;
+        </sql>
+
+        <sql>
+            UPDATE dbo.tables
+            SET last_update_at = SYSUTCDATETIME(), version = version + 1
+            WHERE name = 'user';
+        </sql>
+
+        <rollback>
+            <dropColumn schemaName="dbo" tableName="user" columnName="last_payment_at"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
