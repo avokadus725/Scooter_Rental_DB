@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        RENTAL_SERVICE: trigger to maintain duration_minutes denormalized field.
+        Author: OlesiaShevchenko245
+        Branch: rental_service-denorm
+        Fires: AFTER UPDATE on dbo.rental
+        Updates duration_minutes when end_time is set (rental closed).
+    -->
+    <changeSet id="001-rental-trigger-duration" author="OlesiaShevchenko245">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="rental"/>
+            <columnExists schemaName="dbo" tableName="rental" columnName="duration_minutes"/>
+        </preConditions>
+
+        <sql splitStatements="false">
+            CREATE OR ALTER TRIGGER dbo.trg_rental_duration
+            ON dbo.rental
+            AFTER UPDATE
+            AS
+            BEGIN
+                SET NOCOUNT ON;
+                IF UPDATE(end_time)
+                BEGIN
+                    UPDATE dbo.rental
+                    SET duration_minutes = DATEDIFF(minute, i.start_time, i.end_time)
+                    FROM dbo.rental r
+                    INNER JOIN inserted i ON r.id = i.id
+                    WHERE i.end_time IS NOT NULL;
+                END
+            END;
+        </sql>
+
+        <rollback>
+            <sql>DROP TRIGGER IF EXISTS dbo.trg_rental_duration;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

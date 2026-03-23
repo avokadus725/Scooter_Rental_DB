@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        RENTAL_SERVICE: denormalization — add duration_minutes to rental table.
+        Author: OlesiaShevchenko245
+        Branch: rental_service-denorm
+        Reason: cache computed rental duration to avoid DATEDIFF calculation on every report query.
+    -->
+    <changeSet id="001-rental-add-duration-minutes" author="OlesiaShevchenko245">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="rental"/>
+        </preConditions>
+
+        <addColumn schemaName="dbo" tableName="rental">
+            <column name="duration_minutes" type="INT"
+                    remarks="Denormalized rental duration in minutes: DATEDIFF(minute, start_time, end_time), maintained by trigger"/>
+        </addColumn>
+
+        <sql>
+            UPDATE dbo.rental
+            SET duration_minutes = DATEDIFF(minute, start_time, end_time)
+            WHERE end_time IS NOT NULL;
+        </sql>
+
+        <sql>
+            UPDATE dbo.tables
+            SET last_update_at = SYSUTCDATETIME(), version = version + 1
+            WHERE name = 'rental';
+        </sql>
+
+        <rollback>
+            <dropColumn schemaName="dbo" tableName="rental" columnName="duration_minutes"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
