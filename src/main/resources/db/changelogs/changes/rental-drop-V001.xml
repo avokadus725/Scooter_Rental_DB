@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        RENTAL_SERVICE: drop rental_status dictionary table — transition to heterogeneous model.
+        Author: OlesiaShevchenko245
+        Branch: rental_service-drop
+        Reason: in heterogeneous (NoSQL) model, rental status is stored as a plain string enum
+                directly in the rental document, eliminating the need for a dictionary table.
+        Steps:
+          1. Drop FK constraint from rental.status_id
+          2. Drop status_id column from rental
+          3. Drop rental_status table
+    -->
+
+    <!-- Step 1: drop FK and column status_id from rental -->
+    <changeSet id="001-rental-drop-status-fk" author="OlesiaShevchenko245">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="rental"/>
+            <tableExists schemaName="dbo" tableName="rental_status"/>
+        </preConditions>
+
+        <dropIndex schemaName="dbo" tableName="rental" indexName="idx_rental_status_id"/>
+        <dropIndex schemaName="dbo" tableName="rental" indexName="idx_rental_scooter_status"/>
+
+        <dropForeignKeyConstraint baseTableSchemaName="dbo"
+                                  baseTableName="rental"
+                                  constraintName="FK_rental_rental_status"/>
+
+        <dropColumn schemaName="dbo" tableName="rental" columnName="status_id"/>
+
+        <sql>
+            UPDATE dbo.tables
+            SET last_update_at = SYSUTCDATETIME(), version = version + 1
+            WHERE name = 'rental';
+        </sql>
+
+        <rollback>
+            <addColumn schemaName="dbo" tableName="rental">
+                <column name="status_id" type="INT">
+                    <constraints nullable="false"
+                                 foreignKeyName="FK_rental_rental_status"
+                                 references="dbo.rental_status(id)"/>
+                </column>
+            </addColumn>
+            <sql>CREATE INDEX idx_rental_status_id ON dbo.rental (status_id);</sql>
+            <sql>CREATE INDEX idx_rental_scooter_status ON dbo.rental (scooter_id, status_id);</sql>
+        </rollback>
+    </changeSet>
+
+    <!-- Step 2: drop rental_status table -->
+    <changeSet id="002-drop-rental-status-table" author="OlesiaShevchenko245">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="rental_status"/>
+        </preConditions>
+
+        <sql>DELETE FROM dbo.tables WHERE name = 'rental_status';</sql>
+
+        <dropTable schemaName="dbo" tableName="rental_status"/>
+
+        <rollback>
+            <createTable tableName="rental_status" schemaName="dbo"
+                         remarks="Rental lifecycle status dictionary (PENDING, ACTIVE, COMPLETED, CANCELLED)">
+                <column name="id" type="INT" autoIncrement="true">
+                    <constraints primaryKey="true" nullable="false" primaryKeyName="PK_rental_status"/>
+                </column>
+                <column name="code" type="NVARCHAR(32)">
+                    <constraints nullable="false" unique="true" uniqueConstraintName="UQ_rental_status_code"/>
+                </column>
+                <column name="description" type="NVARCHAR(256)"/>
+            </createTable>
+            <sql>CREATE INDEX idx_rental_status_code ON dbo.rental_status (code);</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

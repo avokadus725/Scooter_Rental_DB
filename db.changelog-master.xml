@@ -45,6 +45,7 @@
 
     <!-- ==================== DROP (heterogeneous model transition) ==================== -->
     <include file="src/main/resources/db/changelogs/changes/user-drop-V001.xml"/>
+    <include file="src/main/resources/db/changelogs/changes/rental-drop-V001.xml"/>
 
     <!-- ==================== DATA SEED CHANGELOGS ==================== -->
     <include file="src/main/resources/db/changelogs/data/role-data-V001.xml"/>
