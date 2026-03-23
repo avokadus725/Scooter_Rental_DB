@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        TEST DATA GENERATION: stored procedures for performance testing.
+        Author: avokadus725
+        Branch: test_data-generation
+        Purpose: generate 10000+ rows for LB4 performance analysis.
+    -->
+
+    <!-- Step 1: procedure to generate locations -->
+    <changeSet id="001-create-sp-generate-locations" author="avokadus725">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="location"/>
+        </preConditions>
+        <sql splitStatements="false">
+            CREATE OR ALTER PROCEDURE dbo.sp_generate_locations
+                @count INT = 100
+            AS
+            BEGIN
+                SET NOCOUNT ON;
+                DECLARE @i INT = 1;
+                WHILE @i &lt;= @count
+                BEGIN
+                    INSERT INTO dbo.location (name, address, latitude, longitude, total_spots, available_spots, is_active)
+                    VALUES (
+                        N'Station_' + CAST(@i AS NVARCHAR(10)),
+                        N'Street ' + CAST(@i AS NVARCHAR(10)) + N', Kharkiv',
+                        49.9900 + (@i % 100) * 0.0010,
+                        36.2300 + (@i % 100) * 0.0010,
+                        10 + (@i % 5),
+                        5 + (@i % 5),
+                        1
+                    );
+                    SET @i = @i + 1;
+                END
+            END;
+        </sql>
+        <rollback>
+            <sql>DROP PROCEDURE IF EXISTS dbo.sp_generate_locations;</sql>
+        </rollback>
+    </changeSet>
+
+    <!-- Step 2: procedure to generate users -->
+    <changeSet id="002-create-sp-generate-users" author="avokadus725">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="user"/>
+        </preConditions>
+        <sql splitStatements="false">
+            CREATE OR ALTER PROCEDURE dbo.sp_generate_users
+                @count INT = 1000
+            AS
+            BEGIN
+                SET NOCOUNT ON;
+                DECLARE @i INT = 1;
+                WHILE @i &lt;= @count
+                BEGIN
+                    INSERT INTO dbo.[user] (username, email, password_hash, phone, first_name, last_name, is_active, created_at)
+                    VALUES (
+                        N'testuser_' + CAST(@i AS NVARCHAR(10)),
+                        N'testuser_' + CAST(@i AS NVARCHAR(10)) + N'@scooter.test',
+                        N'$2a$10$hashedpassword' + CAST(@i AS NVARCHAR(10)),
+                        N'+38050' + RIGHT('0000000' + CAST(@i AS NVARCHAR(10)), 7),
+                        N'First' + CAST(@i AS NVARCHAR(10)),
+                        N'Last' + CAST(@i AS NVARCHAR(10)),
+                        1,
+                        DATEADD(day, -(@count - @i + 1), SYSUTCDATETIME())
+                    );
+                    SET @i = @i + 1;
+                END
+            END;
+        </sql>
+        <rollback>
+            <sql>DROP PROCEDURE IF EXISTS dbo.sp_generate_users;</sql>
+        </rollback>
+    </changeSet>
+
+    <!-- Step 3: procedure to generate scooters -->
+    <changeSet id="003-create-sp-generate-scooters" author="avokadus725">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="scooter"/>
+            <tableExists schemaName="dbo" tableName="scooter_model"/>
+            <tableExists schemaName="dbo" tableName="location"/>
+        </preConditions>
+        <sql splitStatements="false">
+            CREATE OR ALTER PROCEDURE dbo.sp_generate_scooters
+                @count INT = 200
+            AS
+            BEGIN
+                SET NOCOUNT ON;
+                DECLARE @i INT = 1;
+                DECLARE @model_count INT = (SELECT COUNT(*) FROM dbo.scooter_model);
+                DECLARE @location_count INT = (SELECT COUNT(*) FROM dbo.location);
+                DECLARE @model_id INT;
+                DECLARE @location_id INT;
+                WHILE @i &lt;= @count
+                BEGIN
+                    SELECT @model_id = id FROM dbo.scooter_model
+                    ORDER BY id OFFSET ((@i - 1) % @model_count) ROWS FETCH NEXT 1 ROWS ONLY;
+
+                    SELECT @location_id = id FROM dbo.location
+                    ORDER BY id OFFSET ((@i - 1) % @location_count) ROWS FETCH NEXT 1 ROWS ONLY;
+
+                    INSERT INTO dbo.scooter (model_id, serial_number, status, battery_level_pct, current_location_id, last_maintenance_date)
+                    VALUES (
+                        @model_id,
+                        N'SN-' + RIGHT('000000' + CAST(@i AS NVARCHAR(10)), 6),
+                        CASE (@i % 3) WHEN 0 THEN N'AVAILABLE' WHEN 1 THEN N'IN_USE' ELSE N'CHARGING' END,
+                        20 + (@i % 80),
+                        @location_id,
+                        DATEADD(day, -(@i % 90), CAST(SYSUTCDATETIME() AS DATE))
+                    );
+                    SET @i = @i + 1;
+                END
+            END;
+        </sql>
+        <rollback>
+            <sql>DROP PROCEDURE IF EXISTS dbo.sp_generate_scooters;</sql>
+        </rollback>
+    </changeSet>
+
+    <!-- Step 4: procedure to generate rentals (10000+) -->
+    <changeSet id="004-create-sp-generate-rentals" author="avokadus725">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="rental"/>
+            <tableExists schemaName="dbo" tableName="user"/>
+            <tableExists schemaName="dbo" tableName="scooter"/>
+            <tableExists schemaName="dbo" tableName="location"/>
+        </preConditions>
+        <sql splitStatements="false">
+            CREATE OR ALTER PROCEDURE dbo.sp_generate_rentals
+                @count INT = 10000
+            AS
+            BEGIN
+                SET NOCOUNT ON;
+                DECLARE @i INT = 1;
+                DECLARE @user_count INT = (SELECT COUNT(*) FROM dbo.[user]);
+                DECLARE @scooter_count INT = (SELECT COUNT(*) FROM dbo.scooter);
+                DECLARE @location_count INT = (SELECT COUNT(*) FROM dbo.location);
+                DECLARE @user_id INT;
+                DECLARE @scooter_id INT;
+                DECLARE @start_loc_id INT;
+                DECLARE @end_loc_id INT;
+                DECLARE @start_time DATETIME2;
+                DECLARE @end_time DATETIME2;
+                DECLARE @duration_min INT;
+                DECLARE @cost DECIMAL(12,2);
+                WHILE @i &lt;= @count
+                BEGIN
+                    SELECT @user_id = id FROM dbo.[user]
+                    ORDER BY id OFFSET ((@i - 1) % @user_count) ROWS FETCH NEXT 1 ROWS ONLY;
+
+                    SELECT @scooter_id = id FROM dbo.scooter
+                    ORDER BY id OFFSET ((@i - 1) % @scooter_count) ROWS FETCH NEXT 1 ROWS ONLY;
+
+                    SELECT @start_loc_id = id FROM dbo.location
+                    ORDER BY id OFFSET ((@i - 1) % @location_count) ROWS FETCH NEXT 1 ROWS ONLY;
+
+                    SELECT @end_loc_id = id FROM dbo.location
+                    ORDER BY id OFFSET (@i % @location_count) ROWS FETCH NEXT 1 ROWS ONLY;
+
+                    SET @start_time = DATEADD(minute, -(@i * 17 % 525600), SYSUTCDATETIME());
+                    SET @duration_min = 5 + (@i % 115);
+                    SET @end_time = DATEADD(minute, @duration_min, @start_time);
+                    SET @cost = CAST(@duration_min * 0.05 AS DECIMAL(12,2));
+
+                    INSERT INTO dbo.rental (user_id, scooter_id, start_location_id, end_location_id,
+                                            start_time, end_time, distance_km, total_cost, created_at)
+                    VALUES (
+                        @user_id,
+                        @scooter_id,
+                        @start_loc_id,
+                        @end_loc_id,
+                        @start_time,
+                        @end_time,
+                        CAST(@duration_min * 0.3 AS DECIMAL(10,3)),
+                        @cost,
+                        @start_time
+                    );
+                    SET @i = @i + 1;
+                END
+            END;
+        </sql>
+        <rollback>
+            <sql>DROP PROCEDURE IF EXISTS dbo.sp_generate_rentals;</sql>
+        </rollback>
+    </changeSet>
+
+    <!-- Step 5: execute all procedures to fill tables -->
+    <changeSet id="005-execute-data-generation" author="avokadus725">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="location"/>
+            <tableExists schemaName="dbo" tableName="user"/>
+            <tableExists schemaName="dbo" tableName="scooter"/>
+            <tableExists schemaName="dbo" tableName="rental"/>
+        </preConditions>
+        <sql>EXEC dbo.sp_generate_locations @count = 100;</sql>
+        <sql>EXEC dbo.sp_generate_users @count = 1000;</sql>
+        <sql>EXEC dbo.sp_generate_scooters @count = 200;</sql>
+        <sql>EXEC dbo.sp_generate_rentals @count = 10000;</sql>
+        <rollback>
+            <sql>
+                DELETE FROM dbo.rental WHERE user_id IN (SELECT id FROM dbo.[user] WHERE username LIKE 'testuser_%');
+                DELETE FROM dbo.scooter WHERE serial_number LIKE 'SN-%';
+                DELETE FROM dbo.[user] WHERE username LIKE 'testuser_%';
+                DELETE FROM dbo.location WHERE name LIKE 'Station_%';
+            </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
