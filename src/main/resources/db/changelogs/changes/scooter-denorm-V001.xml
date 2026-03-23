@@ -18,13 +18,13 @@
         </preConditions>
 
         <addColumn schemaName="dbo" tableName="scooter">
-            <column name="model_name" type="NVARCHAR(100)"
-                    remarks="Denormalized model name from scooter_model, maintained by trigger"/>
+            <column name="model_display_name" type="NVARCHAR(200)"
+                    remarks="Denormalized display name: brand + model_name from scooter_model, maintained by trigger"/>
         </addColumn>
 
         <sql>
             UPDATE dbo.scooter
-            SET model_name = sm.name
+            SET model_display_name = sm.brand + ' ' + sm.model_name
             FROM dbo.scooter s
             INNER JOIN dbo.scooter_model sm ON s.model_id = sm.id;
         </sql>
@@ -36,7 +36,7 @@
         </sql>
 
         <rollback>
-            <dropColumn schemaName="dbo" tableName="scooter" columnName="model_name"/>
+            <dropColumn schemaName="dbo" tableName="scooter" columnName="model_display_name"/>
         </rollback>
     </changeSet>
 

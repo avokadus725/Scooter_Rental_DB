@@ -16,7 +16,7 @@
         <preConditions onFail="HALT">
             <tableExists schemaName="dbo" tableName="scooter"/>
             <tableExists schemaName="dbo" tableName="scooter_model"/>
-            <columnExists schemaName="dbo" tableName="scooter" columnName="model_name"/>
+            <columnExists schemaName="dbo" tableName="scooter" columnName="model_display_name"/>
         </preConditions>
 
         <sql splitStatements="false">
@@ -29,7 +29,7 @@
                 IF UPDATE(model_id)
                 BEGIN
                     UPDATE dbo.scooter
-                    SET model_name = sm.name
+                    SET model_display_name = sm.brand + ' ' + sm.model_name
                     FROM dbo.scooter s
                     INNER JOIN inserted i ON s.id = i.id
                     INNER JOIN dbo.scooter_model sm ON i.model_id = sm.id;
