@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        SCOOTER_SERVICE: trigger to maintain model_name denormalized field.
+        Author: avokadus725
+        Branch: scooter_service-denorm
+        Fires: AFTER INSERT, UPDATE on dbo.scooter
+        Updates model_name from scooter_model when model_id changes.
+    -->
+    <changeSet id="001-scooter-trigger-model-name" author="avokadus725">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="scooter"/>
+            <tableExists schemaName="dbo" tableName="scooter_model"/>
+            <columnExists schemaName="dbo" tableName="scooter" columnName="model_display_name"/>
+        </preConditions>
+
+        <sql splitStatements="false">
+            CREATE OR ALTER TRIGGER dbo.trg_scooter_model_name
+            ON dbo.scooter
+            AFTER INSERT, UPDATE
+            AS
+            BEGIN
+                SET NOCOUNT ON;
+                IF UPDATE(model_id)
+                BEGIN
+                    UPDATE dbo.scooter
+                    SET model_display_name = sm.brand + ' ' + sm.model_name
+                    FROM dbo.scooter s
+                    INNER JOIN inserted i ON s.id = i.id
+                    INNER JOIN dbo.scooter_model sm ON i.model_id = sm.id;
+                END
+            END;
+        </sql>
+
+        <rollback>
+            <sql>DROP TRIGGER IF EXISTS dbo.trg_scooter_model_name;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
