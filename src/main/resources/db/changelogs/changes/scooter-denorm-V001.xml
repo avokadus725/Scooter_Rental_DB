@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <!--
+        SCOOTER_SERVICE: denormalization — add model_name to scooter table.
+        Author: avokadus725
+        Branch: scooter_service-denorm
+        Reason: cache model name in scooter row to avoid JOIN with scooter_model on every listing query.
+    -->
+    <changeSet id="001-scooter-add-model-name" author="avokadus725">
+        <preConditions onFail="HALT">
+            <tableExists schemaName="dbo" tableName="scooter"/>
+            <tableExists schemaName="dbo" tableName="scooter_model"/>
+        </preConditions>
+
+        <addColumn schemaName="dbo" tableName="scooter">
+            <column name="model_name" type="NVARCHAR(100)"
+                    remarks="Denormalized model name from scooter_model, maintained by trigger"/>
+        </addColumn>
+
+        <sql>
+            UPDATE dbo.scooter
+            SET model_name = sm.name
+            FROM dbo.scooter s
+            INNER JOIN dbo.scooter_model sm ON s.model_id = sm.id;
+        </sql>
+
+        <sql>
+            UPDATE dbo.tables
+            SET last_update_at = SYSUTCDATETIME(), version = version + 1
+            WHERE name = 'scooter';
+        </sql>
+
+        <rollback>
+            <dropColumn schemaName="dbo" tableName="scooter" columnName="model_name"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
